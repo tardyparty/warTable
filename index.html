@@ -2,698 +2,811 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>The Society — Sol Dominion</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+<title>The Worlds of the Society — Red Rising System Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --void:#04060d;
-    --gold:#d8b04a;
-    --gold-dim:#8a7434;
-    --crimson:#c1352b;
-    --bone:#e9e4d6;
-    --slate:#6f7890;
-    --panel:rgba(8,11,20,.92);
+    --void:#04050a;
+    --ink:#ece3cc;
+    --ink-dim:#9a917c;
+    --gold:#d4a937;
+    --gold-bright:#f0c75e;
+    --gold-dim:rgba(212,169,55,.35);
+    --crimson:#b3322a;
+    --rim:#7fa3b5;
+    --panel:rgba(8,10,16,.94);
+    --hairline:rgba(212,169,55,.25);
+    --safe-top:env(safe-area-inset-top,0px);
+    --safe-bot:env(safe-area-inset-bottom,0px);
   }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html,body{height:100%;overflow:hidden;background:var(--void)}
-  body{
-    font-family:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;
-    color:var(--bone);
-  }
-  canvas{display:block}
-  ::selection{background:var(--gold);color:var(--void)}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;overflow:hidden;background:var(--void);color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;overscroll-behavior:none;}
+  #scene{position:fixed;inset:0;cursor:grab;touch-action:none;}
+  #scene.dragging{cursor:grabbing;}
+  #scene.hovering{cursor:pointer;}
+  #scene canvas{display:block;}
 
-  /* ---------- header ---------- */
-  #masthead{
+  /* ---------- top bar ---------- */
+  #topbar{
     position:fixed;top:0;left:0;right:0;z-index:20;
-    padding:18px 22px 10px;
+    display:flex;align-items:center;gap:12px;
+    padding:calc(12px + var(--safe-top)) 20px 20px;
+    background:linear-gradient(to bottom, rgba(4,5,10,.9), transparent);
     pointer-events:none;
-    background:linear-gradient(to bottom,rgba(4,6,13,.85),rgba(4,6,13,0));
   }
-  #masthead h1{
-    font-size:clamp(15px,2.2vw,21px);
-    letter-spacing:.42em;text-transform:uppercase;font-weight:600;
-    color:var(--gold);
+  #topbar > *{pointer-events:auto;}
+  #menuBtn{display:none;}
+  .title-wrap{flex:1;text-align:center;min-width:0;}
+  .title-wrap .eyebrow{
+    font-size:10px;letter-spacing:.42em;text-transform:uppercase;color:var(--gold);
+    margin-bottom:4px;
   }
-  #masthead .sub{
-    margin-top:5px;font-size:11px;letter-spacing:.3em;text-transform:uppercase;
-    color:var(--slate);
+  .title-wrap h1{
+    font-family:'Cinzel',serif;font-weight:700;font-size:clamp(15px,2.6vw,26px);
+    letter-spacing:.16em;text-transform:uppercase;color:var(--ink);white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;
   }
-  #masthead .rule{
-    margin-top:10px;height:1px;max-width:340px;
-    background:linear-gradient(to right,var(--gold-dim),transparent);
+  .title-wrap h1 span{color:var(--gold-bright);}
+
+  /* ---------- spoiler selector ---------- */
+  #spoiler{
+    display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex:none;
+  }
+  #spoiler label{
+    font-size:9px;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);
+  }
+  #spoiler select{
+    appearance:none;-webkit-appearance:none;
+    background:var(--panel);color:var(--ink);
+    border:1px solid var(--gold-dim);
+    font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;
+    padding:7px 30px 7px 12px;cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23d4a937' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 11px center;background-size:10px;
+  }
+  #spoiler select:hover{border-color:var(--gold);}
+
+  /* menu button (mobile) */
+  #menuBtn{
+    background:var(--panel);border:1px solid var(--gold-dim);color:var(--gold-bright);
+    width:40px;height:40px;cursor:pointer;flex:none;
+    align-items:center;justify-content:center;font-size:17px;
   }
 
-  /* ---------- labels ---------- */
-  .tag{
-    position:absolute;z-index:5;transform:translate(-50%,-130%);
-    font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
-    font-size:10px;letter-spacing:.22em;text-transform:uppercase;
-    color:var(--bone);opacity:.78;cursor:pointer;white-space:nowrap;
-    padding:3px 7px;user-select:none;-webkit-user-select:none;
-    text-shadow:0 0 6px rgba(0,0,0,.9);
-    transition:color .15s,opacity .15s;
+  /* ---------- nav ---------- */
+  #scrim{
+    position:fixed;inset:0;z-index:25;background:rgba(2,3,6,.6);
+    opacity:0;pointer-events:none;transition:opacity .25s;
   }
-  .tag::after{
-    content:'';position:absolute;left:50%;top:100%;width:1px;height:9px;
-    background:currentColor;opacity:.5;
+  #scrim.show{opacity:1;pointer-events:auto;}
+  nav{
+    position:fixed;left:16px;top:50%;transform:translateY(-50%);z-index:30;
+    max-height:74vh;overflow-y:auto;padding:14px;
+    background:var(--panel);border:1px solid var(--hairline);
+    backdrop-filter:blur(6px);width:190px;
+    scrollbar-width:thin;scrollbar-color:var(--gold-dim) transparent;
   }
-  .tag:hover{color:var(--gold);opacity:1}
-  .tag.ship{color:var(--crimson);opacity:.92}
-  .tag.ship:hover{color:#ff6a5c}
-  .tag.sel{color:var(--gold);opacity:1}
+  nav h2{
+    font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.3em;
+    text-transform:uppercase;color:var(--gold);margin:14px 0 6px;
+  }
+  nav h2:first-child{margin-top:0;}
+  nav button{
+    display:flex;align-items:center;gap:8px;width:100%;
+    background:none;border:none;color:var(--ink-dim);
+    font-family:'Inter',sans-serif;font-size:12.5px;font-weight:500;
+    padding:6px;cursor:pointer;text-align:left;border-left:2px solid transparent;
+    transition:color .15s,border-color .15s,background .15s;
+  }
+  nav button:hover{color:var(--ink);background:rgba(212,169,55,.06);}
+  nav button.active{color:var(--gold-bright);border-left-color:var(--gold);}
+  nav button .dot{width:6px;height:6px;border-radius:50%;flex:none;}
+  nav button .dot.society{background:var(--gold);}
+  nav button .dot.republic{background:var(--crimson);}
+  nav button .dot.rim{background:var(--rim);}
+  nav button .dot.none{background:#565d6c;}
+  nav button.sub{padding-left:18px;font-size:12px;}
+  nav .legend{
+    margin-top:16px;padding-top:12px;border-top:1px solid var(--hairline);
+    display:grid;gap:5px;
+  }
+  nav .legend .li{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--ink-dim);}
+  nav .legend .li .dot{width:6px;height:6px;border-radius:50%;}
 
-  /* ---------- dossier panel ---------- */
+  /* ---------- dossier ---------- */
   #dossier{
-    position:fixed;top:0;right:0;bottom:0;z-index:30;
-    width:min(360px,92vw);
-    background:var(--panel);
-    border-left:1px solid rgba(216,176,74,.35);
-    backdrop-filter:blur(8px);
-    transform:translateX(105%);
-    transition:transform .45s cubic-bezier(.22,.9,.3,1);
-    display:flex;flex-direction:column;
+    position:fixed;right:16px;top:50%;transform:translateY(-50%) translateX(24px);
+    z-index:15;width:300px;max-height:78vh;overflow-y:auto;
+    background:var(--panel);border:1px solid var(--hairline);
+    padding:22px 22px 20px;opacity:0;pointer-events:none;
+    transition:opacity .3s ease,transform .3s ease;
+    scrollbar-width:thin;scrollbar-color:var(--gold-dim) transparent;
   }
-  #dossier.open{transform:translateX(0)}
-  #dossier .inner{padding:26px 26px 20px;overflow-y:auto}
-  #dossier .eyebrow{
-    font-family:ui-monospace,Menlo,Consolas,monospace;
-    font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--crimson);
+  #dossier.open{opacity:1;pointer-events:auto;transform:translateY(-50%) translateX(0);}
+  #dossier .sigil{
+    width:46px;height:46px;margin:0 auto 12px;border-radius:50%;
+    border:1px solid var(--gold);position:relative;
   }
-  #dossier h2{
-    margin-top:8px;font-size:27px;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--gold);font-weight:600;line-height:1.15;
+  #dossier .sigil::before{content:"";position:absolute;inset:5px;border-radius:50%;border:1px solid var(--gold-dim);}
+  #dossier .sigil::after{
+    content:"";position:absolute;inset:0;margin:auto;width:8px;height:8px;border-radius:50%;
+    background:var(--sigil-color,var(--gold));box-shadow:0 0 12px var(--sigil-color,var(--gold));
   }
-  #dossier .laurel{
-    margin:14px 0 18px;height:1px;
-    background:linear-gradient(to right,var(--gold-dim),transparent 85%);
-    position:relative;
+  #dossier .d-class{
+    font-size:9.5px;letter-spacing:.34em;text-transform:uppercase;color:var(--gold);
+    text-align:center;margin-bottom:4px;
   }
-  #dossier .laurel::before{
-    content:'◆';position:absolute;left:0;top:-7px;font-size:9px;color:var(--gold);
+  #dossier h3{
+    font-family:'Cinzel',serif;font-weight:700;font-size:22px;letter-spacing:.09em;
+    text-transform:uppercase;text-align:center;color:var(--ink);margin-bottom:14px;
   }
-  dl{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;margin-bottom:20px}
-  dt{
-    font-family:ui-monospace,Menlo,Consolas,monospace;
-    font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;
-    color:var(--slate);padding-top:2px;white-space:nowrap;
+  #dossier dl{border-top:1px solid var(--hairline);border-bottom:1px solid var(--hairline);padding:10px 0;margin-bottom:12px;}
+  #dossier dl .row{display:flex;justify-content:space-between;gap:12px;padding:4px 0;}
+  #dossier dt{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-dim);padding-top:2px;flex:none;}
+  #dossier dd{font-size:12.5px;color:var(--ink);text-align:right;}
+  #dossier p{font-size:13px;line-height:1.65;color:var(--ink-dim);}
+  #dossier .close{
+    position:absolute;top:10px;right:12px;background:none;border:none;color:var(--ink-dim);
+    font-size:16px;cursor:pointer;padding:6px;line-height:1;
   }
-  dd{font-size:13.5px;color:var(--bone);line-height:1.45}
-  #dossier p{font-size:13.5px;line-height:1.7;color:#c9c3b4}
-  #dossier p + p{margin-top:10px}
-  #closeBtn{
-    position:absolute;top:14px;right:14px;
-    background:none;border:1px solid rgba(216,176,74,.4);color:var(--gold);
-    width:30px;height:30px;cursor:pointer;font-size:14px;line-height:1;
-    font-family:inherit;
-  }
-  #closeBtn:hover,#closeBtn:focus-visible{background:rgba(216,176,74,.15)}
-  button:focus-visible,.tag:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  #dossier .close:hover{color:var(--gold-bright);}
 
-  /* ---------- nav strip ---------- */
-  #nav{
-    position:fixed;left:0;right:0;bottom:0;z-index:20;
-    display:flex;gap:4px;align-items:center;
-    padding:12px 16px 14px;overflow-x:auto;
-    background:linear-gradient(to top,rgba(4,6,13,.9),rgba(4,6,13,0));
-    scrollbar-width:none;
+  /* ---------- controls ---------- */
+  #controls{
+    position:fixed;bottom:calc(16px + var(--safe-bot));left:50%;transform:translateX(-50%);z-index:15;
+    display:flex;align-items:center;gap:10px;
+    background:var(--panel);border:1px solid var(--hairline);padding:8px 14px;backdrop-filter:blur(6px);
   }
-  #nav::-webkit-scrollbar{display:none}
-  #nav button{
-    flex:0 0 auto;background:none;border:1px solid transparent;
-    color:var(--slate);cursor:pointer;
-    font-family:ui-monospace,Menlo,Consolas,monospace;
-    font-size:10px;letter-spacing:.18em;text-transform:uppercase;
-    padding:6px 10px;transition:color .15s,border-color .15s;
+  .ctl-btn{
+    background:none;border:1px solid var(--hairline);color:var(--ink-dim);
+    font-family:'Inter',sans-serif;font-size:10.5px;font-weight:600;letter-spacing:.16em;
+    text-transform:uppercase;padding:7px 12px;cursor:pointer;transition:all .15s;
   }
-  #nav button:hover{color:var(--bone)}
-  #nav button.active{color:var(--gold);border-color:rgba(216,176,74,.45)}
-  #nav button.shipBtn{color:#a04038}
-  #nav button.shipBtn:hover{color:#ff6a5c}
-  #nav button.shipBtn.active{color:var(--crimson);border-color:rgba(193,53,43,.5)}
-  #nav .div{flex:0 0 1px;height:18px;background:rgba(216,176,74,.3);margin:0 6px}
+  .ctl-btn:hover{color:var(--gold-bright);border-color:var(--gold);}
+  .ctl-btn.on{color:var(--gold-bright);border-color:var(--gold);background:rgba(212,169,55,.08);}
+  #controls .hint{font-size:10.5px;letter-spacing:.05em;color:var(--ink-dim);}
 
-  /* ---------- corner controls ---------- */
-  #ctrls{position:fixed;top:18px;right:18px;z-index:25;display:flex;gap:8px}
-  #ctrls button{
-    background:rgba(8,11,20,.7);border:1px solid rgba(216,176,74,.35);
-    color:var(--gold);cursor:pointer;padding:7px 12px;
-    font-family:ui-monospace,Menlo,Consolas,monospace;
-    font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  #tooltip{
+    position:fixed;z-index:14;pointer-events:none;opacity:0;transition:opacity .12s;
+    font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--gold-bright);text-shadow:0 0 8px rgba(0,0,0,.9);
+    transform:translate(-50%,-160%);
   }
-  #ctrls button:hover{background:rgba(216,176,74,.15)}
 
-  #hint{
-    position:fixed;left:22px;bottom:64px;z-index:15;pointer-events:none;
-    font-family:ui-monospace,Menlo,Consolas,monospace;
-    font-size:10px;letter-spacing:.18em;text-transform:uppercase;
-    color:var(--slate);opacity:.85;line-height:1.9;
-    transition:opacity 1s;
-  }
-  @media (max-width:640px){
-    #hint{display:none}
-    #masthead{padding:14px 14px 8px}
-    #ctrls{top:auto;bottom:58px;right:12px}
+  button:focus-visible,select:focus-visible{outline:1px solid var(--gold-bright);outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){#dossier,#scrim,nav{transition:none;}}
+
+  /* ---------- mobile ---------- */
+  @media (max-width:760px){
+    #topbar{padding:calc(10px + var(--safe-top)) 12px 16px;gap:10px;}
+    #menuBtn{display:flex;}
+    .title-wrap .eyebrow{display:none;}
+    .title-wrap h1{font-size:14px;letter-spacing:.1em;}
+    #spoiler{align-items:flex-end;}
+    #spoiler label{display:none;}
+    #spoiler select{padding:8px 28px 8px 10px;font-size:12px;}
+
+    nav{
+      left:0;top:0;bottom:0;transform:translateX(-106%);
+      width:min(78vw,280px);max-height:none;height:100%;
+      padding:calc(18px + var(--safe-top)) 18px calc(18px + var(--safe-bot));
+      transition:transform .28s ease;border-top:none;border-bottom:none;border-left:none;
+    }
+    nav.open{transform:translateX(0);}
+
+    #dossier{
+      right:0;left:0;top:auto;bottom:0;width:auto;
+      max-height:56vh;border-left:none;border-right:none;border-bottom:none;
+      padding:20px 20px calc(20px + var(--safe-bot));
+      transform:translateY(110%);border-radius:14px 14px 0 0;
+    }
+    #dossier.open{transform:translateY(0);}
+
+    #controls{
+      left:auto;right:12px;bottom:auto;top:calc(64px + var(--safe-top));
+      transform:none;flex-direction:column;padding:8px;gap:8px;background:transparent;border:none;
+    }
+    #controls .hint{display:none;}
+    .ctl-btn{background:var(--panel);width:100%;text-align:center;}
   }
 </style>
 </head>
 <body>
 
-<header id="masthead">
-  <h1>The Society · Sol Dominion</h1>
-  <div class="sub">War table holo — strategic chart of the system, Year 754 PCE</div>
-  <div class="rule"></div>
-</header>
+<div id="scene"></div>
 
-<div id="ctrls">
-  <button id="pauseBtn" type="button">Pause</button>
-  <button id="resetBtn" type="button">Reset view</button>
+<div id="topbar">
+  <button id="menuBtn" aria-label="Open world list">☰</button>
+  <div class="title-wrap">
+    <div class="eyebrow">Per Aspera · Ad Astra</div>
+    <h1>The Worlds of the <span>Society</span></h1>
+  </div>
+  <div id="spoiler">
+    <label for="spoilerSel">Spoilers through</label>
+    <select id="spoilerSel" aria-label="Show lore through book"></select>
+  </div>
 </div>
 
-<div id="hint">
-  drag — rotate chart<br>
-  scroll / pinch — zoom<br>
-  tap a body or ship — open dossier
-</div>
-
+<div id="scrim"></div>
 <nav id="nav" aria-label="Bodies and ships"></nav>
 
 <aside id="dossier" aria-live="polite">
-  <button id="closeBtn" aria-label="Close dossier" type="button">✕</button>
-  <div class="inner">
-    <div class="eyebrow" id="dEyebrow"></div>
-    <h2 id="dName"></h2>
-    <div class="laurel"></div>
-    <dl id="dStats"></dl>
-    <div id="dBody"></div>
-  </div>
+  <button class="close" id="dossierClose" aria-label="Close dossier">✕</button>
+  <div class="sigil" id="dSigil"></div>
+  <div class="d-class" id="dClass"></div>
+  <h3 id="dName"></h3>
+  <dl id="dStats"></dl>
+  <p id="dDesc"></p>
 </aside>
+
+<div id="controls">
+  <button id="btnMotion" class="ctl-btn on">Orbits: On</button>
+  <button id="btnReset" class="ctl-btn">Reset View</button>
+  <span class="hint">Drag to rotate · Pinch / scroll to zoom · Tap a world</span>
+</div>
+
+<div id="tooltip"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-(function(){
-'use strict';
+/* =========================================================
+   THE WORLDS OF THE SOCIETY — interactive Red Rising map.
+   Not to scale; loyal in spirit. Includes a book-based
+   spoiler guard so nothing is revealed before you've read it.
+   ========================================================= */
 
-/* ============================================================
-   DATA — bodies & ships of the Red Rising system
-   ============================================================ */
+const ALLEGIANCE_COLORS = { society:'#d4a937', republic:'#b3322a', rim:'#7fa3b5', none:'#565d6c' };
+
+/* reading order — index = earliest book a reveal can belong to */
+const BOOKS = [
+  { n:1, title:'Red Rising' },
+  { n:2, title:'Golden Son' },
+  { n:3, title:'Morning Star' },
+  { n:4, title:'Iron Gold' },
+  { n:5, title:'Dark Age' },
+  { n:6, title:'Light Bringer' },
+];
+
+/* -----------------------------------------------------------
+   DATA MODEL
+   Each body/ship carries:
+     known   : first book it may appear on the map
+     reveals : tiers, each { book, allegiance, stats, desc }
+   The shown tier is the highest reveal with book <= readerLevel.
+   Below `known`, ships are hidden entirely.
+   ----------------------------------------------------------- */
 const BODIES = [
-  {
-    id:'sol', name:'Sol', eyebrow:'Star · The Forge of All',
-    type:'star', radius:16, distance:0, speed:0, spin:.0008,
-    color:0xffc24d,
-    stats:{ 'Class':'G2V main-sequence star', 'Held by':'No one. Worshiped by all colors.', 'Notable':'Sun farms of Mercury skim its fire' },
-    body:`Every banner in the system — Gold pyramid, red sigil of Ares, the crescent of the Rim — orbits this furnace. The Society called itself eternal; Sol outlasts every Sovereign who said so.`
-  },
-  {
-    id:'mercury', name:'Mercury', eyebrow:'Planet · Core Dominion',
-    type:'planet', radius:1.3, distance:42, speed:.020, spin:.004,
-    color:0xb09a7c,
-    stats:{ 'Capital':'Tyche (drowned) · Heliopolis', 'Held by':'Contested — Republic / Society remnant', 'Famed for':'Sun farms, heat-scoured legions', 'Conflict':'Battle of Mercury — Darrow\u2019s Iron Rain' },
-    body:`Closest world to the forge, mined and farmed for energy by generations of Reds and Oranges. Darrow\u2019s Free Legions stormed it in one of the bloodiest campaigns of the war, and the Ash Armada of Atalantia au Grimmus came to take it back.`,
-    moons:[]
-  },
-  {
-    id:'venus', name:'Venus', eyebrow:'Planet · Core Dominion',
-    type:'planet', radius:2.4, distance:64, speed:.015, spin:.003,
-    color:0xd8a55a,
-    stats:{ 'Held by':'House Carthii / Society loyalists', 'Famed for':'Carthii dockyards — warship cradle of the Core', 'Allegiance':'Golds of the old order' },
-    body:`A loyalist bastion wrapped in cloud. The Carthii shipyards of Venus launched many of the dreadnoughts that hunted the Rising — proud, decadent, and slow to accept that the age of iron Gold was ending.`,
-    moons:[]
-  },
-  {
-    id:'earth', name:'Earth', eyebrow:'Planet · Cradle of Humanity',
-    type:'planet', radius:2.5, distance:88, speed:.012, spin:.005,
-    color:0x4f7fb5,
-    stats:{ 'Status':'Conquered cradle', 'Held by':'The Society, then the Republic', 'Famed for':'Birthworld of the species — and first to kneel' },
-    body:`Humanity\u2019s birthplace, conquered from Luna when the Golds turned on their makers in the great betrayal that founded the Society. In Darrow\u2019s age it is a quiet province; the system\u2019s wars are fought above it, not for it.`,
-    moons:[
-      { id:'luna', name:'Luna', eyebrow:'Moon · Capital of Worlds',
-        radius:.95, distance:6.5, speed:.05, color:0xcfd2d8,
-        stats:{ 'Capital':'Hyperion — the Citadel of Light', 'Seat of':'Sovereign Octavia au Lune, later the Republic Senate', 'Famed for':'Where the Society was born — and where it fell' },
-        body:`The marble heart of the empire. From the Citadel on Luna, Octavia au Lune ruled a hundred worlds; on its streets the Rising won its bloodiest prize. Hyperion\u2019s towers have crowned Sovereigns and burned for them.` }
-    ]
-  },
-  {
-    id:'mars', name:'Mars', eyebrow:'Planet · The Red Heart',
-    type:'planet', radius:2.0, distance:114, speed:.010, spin:.005,
-    color:0xc1452b,
-    stats:{ 'Capital':'Agea, in the Valles Marineris', 'Famed for':'Lykos mine — birthplace of Darrow of Lykos', 'Allegiance':'First world of the Rising', 'Beneath':'Helium-3 veins dug by generations of Reds' },
-    body:`Terraformed by the sweat of Reds who were told the surface was still poison. Darrow was born a Helldiver of Lykos beneath this soil, was carved into a Gold at the Institute of Agea, and raised the howl of Ares that broke the Society.`,
-    moons:[
-      { id:'phobos', name:'Phobos', eyebrow:'Moon · Orbital City',
-        radius:.4, distance:4.4, speed:.07, color:0x9a8a80,
-        stats:{ 'Famed for':'City-moon of docks and slums', 'Conflict':'Seized by the Rising; raided in the Republic years' },
-        body:`Less a moon than a city in the sky — a warren of docks, markets, and lowColor districts wrapped around captured rock. Whoever holds Phobos holds the high ground over Mars.` },
-      { id:'deimos', name:'Deimos', eyebrow:'Moon · Bastion',
-        radius:.32, distance:6.2, speed:.055, color:0x7d736c,
-        stats:{ 'Famed for':'Military anchorage of Mars', 'Held by':'Republic fleet command' },
-        body:`The quieter twin, ringed with gun platforms and fleet berths. Deimos watches the approaches to the Red Heart.` }
-    ]
-  },
-  {
-    id:'belt', name:'The Belt', eyebrow:'Asteroid Belt · Lawless Marches',
-    type:'belt', radius:1.0, distance:142, speed:.007, spin:0,
-    color:0x8a8378,
-    stats:{ 'Held by':'No one for long', 'Famed for':'Smuggler havens, Syndicate routes, hidden yards', 'Notable':'Where the Sons of Ares hid what the Society could not find' },
-    body:`A million cold rocks between Core and Rim. Pirates, Syndicate thorns, and rebels have always known its shadows better than any Sovereign\u2019s fleet — more than one secret warship has slipped out of the Belt to change history.`
-  },
-  {
-    id:'jupiter', name:'Jupiter', eyebrow:'Planet · Gate of the Rim',
-    type:'planet', radius:8, distance:190, speed:.006, spin:.009,
-    color:0xc8a070,
-    stats:{ 'Held by':'The Rim Dominion — House Raa', 'Famed for':'The Dockyards of Ganymede', 'Conflict':'Battle of Ilium — Darrow\u2019s gambit at the docks' },
-    body:`The great banded sentinel of the outer system. Around its moons the Rim Dominion built its strength, and here Darrow burned his name into history with the boldest fleet action of the war.`,
-    moons:[
-      { id:'io', name:'Io', eyebrow:'Moon · Seat of House Raa',
-        radius:.85, distance:12.5, speed:.04, color:0xd6c050,
-        stats:{ 'Seat of':'Romulus au Raa, Sovereign of the Rim', 'Famed for':'Sulfur dunes and the iron honor of the Raa' },
-        body:`Volcanic and unforgiving, like its masters. From Io the Raa rule the Rim by an older, harder code than Luna\u2019s — and they neither forget Rhea, nor forgive it.` },
-      { id:'europa', name:'Europa', eyebrow:'Moon · Ocean World',
-        radius:.75, distance:15.5, speed:.034, color:0xb8c8d8,
-        stats:{ 'Famed for':'Seas beneath the ice; storm-grey navies of the Rim' },
-        body:`An ice shell over a black ocean. Europan Golds are sailors as much as knights, raised on drowned cities and patient tides.` },
-      { id:'ganymede', name:'Ganymede', eyebrow:'Moon · The Dockyards',
-        radius:1.0, distance:18.8, speed:.028, color:0xa39a8e,
-        stats:{ 'Famed for':'Greatest shipyards ever built', 'Conflict':'Prize of the Battle of Ilium' },
-        body:`The Dockyards of Ganymede could birth a navy in a year. When Darrow came to Ilium, every power in the system learned that whoever holds these slipways holds tomorrow\u2019s war.` },
-      { id:'callisto', name:'Callisto', eyebrow:'Moon · Rim Marches',
-        radius:.95, distance:22.5, speed:.023, color:0x8e8276,
-        stats:{ 'Famed for':'Cratered garrison world of the Dominion' },
-        body:`Old, scarred, and watchful — the outermost of the great four, where Rim destroyers drill in the dark.` }
-    ]
-  },
-  {
-    id:'saturn', name:'Saturn', eyebrow:'Planet · Ringed Marches',
-    type:'planet', radius:7, distance:242, speed:.0045, spin:.008,
-    color:0xd8c08a, ring:true,
-    stats:{ 'Held by':'The Rim Dominion', 'Famed for':'The rings — and the grief of Rhea', 'Allegiance':'Sworn to the Raa' },
-    body:`Beautiful and bitter. Saturn\u2019s moons remember what the Core would rather forget: that the Society\u2019s peace was kept with fire.`,
-    moons:[
-      { id:'titan', name:'Titan', eyebrow:'Moon · Veiled World',
-        radius:1.0, distance:13.5, speed:.03, color:0xc89a52,
-        stats:{ 'Famed for':'Methane hazes, hardest soldiers of the Rim' },
-        body:`Wrapped in orange haze, Titan breeds Golds who think Luna soft and even Io comfortable.` },
-      { id:'rhea', name:'Rhea', eyebrow:'Moon · The First to Burn',
-        radius:.62, distance:10, speed:.038, color:0x6e6a66,
-        stats:{ 'Status':'Scorched', 'Conflict':'Nuked by Octavia au Lune to end the first Rim rebellion', 'Legacy':'The wound that made the Rim what it is' },
-        body:`When the Rim first rose against Luna, the Sovereign answered with atomics. Rhea burned, and a generation of the outer worlds was raised on its ashes. Every Rim oath since has been sworn in its shadow.` }
-    ]
-  },
-  {
-    id:'uranus', name:'Uranus', eyebrow:'Planet · Far Marches',
-    type:'planet', radius:4.5, distance:286, speed:.0033, spin:.006,
-    color:0x9fd2d8,
-    stats:{ 'Held by':'Rim Dominion — thinly', 'Famed for':'Cold harvests, long silences' },
-    body:`So far from Luna that its tithe ships take years. Out here the Society was always more rumor than law.`,
-    moons:[]
-  },
-  {
-    id:'neptune', name:'Neptune', eyebrow:'Planet · The Deep',
-    type:'planet', radius:4.4, distance:322, speed:.0027, spin:.006,
-    color:0x4a6ed0,
-    stats:{ 'Held by':'Rim Dominion — in name', 'Famed for':'Last great anchorage before the dark' },
-    body:`Storm-blue and remote. Fleets that wish to vanish from the system\u2019s wars have been known to winter in Neptune\u2019s shadow.`,
-    moons:[
-      { id:'triton', name:'Triton', eyebrow:'Moon · Frontier Hold',
-        radius:.8, distance:9.5, speed:.03, color:0xc8d4d8,
-        stats:{ 'Famed for':'Nitrogen ice, exile postings' },
-        body:`A retrograde wanderer captured long ago — fitting home for the Society\u2019s exiles and the Rim\u2019s far watch.` }
-    ]
-  },
-  {
-    id:'pluto', name:'Pluto', eyebrow:'Dwarf Planet · The Edge',
-    type:'planet', radius:.8, distance:352, speed:.0022, spin:.004,
-    color:0xb8aa98,
-    stats:{ 'Status':'Outpost', 'Famed for':'Where the maps of the Society end' },
-    body:`Beyond Pluto there is only the long dark — and whatever humanity becomes next.`,
-    moons:[]
-  }
+  { id:'sol', name:'Sol', cls:'The Star', size:6.5, orbit:0, speed:0, color:0xffc24d, emissive:true, known:1,
+    reveals:[{ book:1, allegiance:'none',
+      stats:{ 'Type':'G-class star', 'Domain':'All of it' },
+      desc:'The fire every banner claims to carry. From Mercury\'s furnaces to the cold Rim, all of humanity\'s wars are fought by its light.' }] },
+
+  { id:'mercury', name:'Mercury', cls:'Planet · The Core', size:1.5, orbit:16, speed:0.5, color:0xb08d5e, known:1,
+    reveals:[
+      { book:1, allegiance:'society',
+        stats:{ 'Allegiance':'The Society', 'Region':'The Core' },
+        desc:'The innermost world — sun-scorched shield cities and smelters, held firmly under Gold rule.' },
+      { book:5, allegiance:'society',
+        stats:{ 'Allegiance':'The Society', 'Ruling House':'Votum', 'Known For':'Iron Rain · Battle of Mercury' },
+        desc:'Here the Reaper loosed his most desperate Iron Rain, and the long Battle of Mercury bled both Republic and Society white.' }] },
+
+  { id:'venus', name:'Venus', cls:'Planet · The Core', size:2.3, orbit:24, speed:0.4, color:0xd9b27a, known:1,
+    reveals:[
+      { book:1, allegiance:'society',
+        stats:{ 'Allegiance':'The Society', 'Great Houses':'Carthii · Saud' },
+        desc:'A garden world of Gold luxury and court intrigue — splendor built atop a hundred lesser Colors.' },
+      { book:4, allegiance:'society',
+        stats:{ 'Allegiance':'The Society', 'Great Houses':'Carthii · Saud', 'Known For':'Shipyards' },
+        desc:'The last great fortress of Gold. Its orbital yards forge the Society\'s armadas, and its courts shelter what remains of the old order — scheming, splendid, far from beaten.' }] },
+
+  { id:'earth', name:'Earth', cls:'Planet · The Core', size:2.4, orbit:33, speed:0.3, color:0x4a7fae, known:1,
+    reveals:[
+      { book:1, allegiance:'society',
+        stats:{ 'Allegiance':'The Society', 'Status':'Cradle of Humanity' },
+        desc:'Where it all began — now overshadowed by its own moon, a quiet blue relic of the Society\'s reach.' },
+      { book:3, allegiance:'republic',
+        stats:{ 'Allegiance':'The Republic', 'Status':'Cradle of Humanity' },
+        desc:'After the Rising it answers to the Republic. Old Earth watches the wars of its children from a quiet blue distance.' }] },
+
+  { id:'luna', name:'Luna', cls:'Moon of Earth', size:0.9, parent:'earth', orbit:4.6, speed:1.4, color:0xc8c4bb, known:1,
+    reveals:[
+      { book:1, allegiance:'society',
+        stats:{ 'Allegiance':'The Society', 'Seat':'Citadel of Light', 'Rules':'House Lune' },
+        desc:'For seven hundred years the seat of the Sovereign. From the Citadel of Light, House Lune rules every world under the Sun.' },
+      { book:3, allegiance:'republic',
+        stats:{ 'Allegiance':'The Republic', 'Capital City':'Hyperion', 'Former Seat':'House Lune' },
+        desc:'The Rising took it and House Lune fell. Now capital of the Republic — half the system\'s intrigues are still born in Hyperion\'s towers.' }] },
+
+  { id:'mars', name:'Mars', cls:'Planet · The Core', size:2.0, orbit:43, speed:0.24, color:0xb1492e, known:1,
+    reveals:[
+      { book:1, allegiance:'society',
+        stats:{ 'Allegiance':'The Society', 'Home':'Lykos', 'Known For':'The Institute' },
+        desc:'The red world. In its deep mines the Reds dig and die believing they are pioneers — until one helldiver of Lykos learns the truth.' },
+      { book:3, allegiance:'republic',
+        stats:{ 'Allegiance':'The Republic', 'Capital':'Agea', 'Known For':'Lykos · The Rising' },
+        desc:'Homeworld of Darrow of Lykos and the first world freed. The beating heart of the young Republic.' }] },
+
+  { id:'phobos', name:'Phobos', cls:'Moon of Mars', size:0.55, parent:'mars', orbit:3.4, speed:2.0, color:0x8d8678, known:2,
+    reveals:[
+      { book:2, allegiance:'society',
+        stats:{ 'Allegiance':'The Society', 'Known For':'Dockyards & spires' },
+        desc:'A captured rock wrapped in spires, docks and slums — the gateway to Mars, with highlords above and gangs below.' },
+      { book:3, allegiance:'republic',
+        stats:{ 'Allegiance':'The Republic', 'Known For':'Dockyards & spires' },
+        desc:'Mars\' crowded doorway, now flying Republic colors. Trouble at every airlock, same as ever.' }] },
+
+  { id:'deimos', name:'Deimos', cls:'Moon of Mars', size:0.4, parent:'mars', orbit:5.2, speed:1.3, color:0x6f695e, known:2,
+    reveals:[
+      { book:2, allegiance:'society',
+        stats:{ 'Allegiance':'The Society', 'Role':'Naval anchorage' },
+        desc:'Mars\' lesser moon — garrisons, gun platforms, and the patient business of war.' },
+      { book:3, allegiance:'republic',
+        stats:{ 'Allegiance':'The Republic', 'Role':'Naval anchorage' },
+        desc:'A Republic anchorage over Mars, bristling and watchful.' }] },
+
+  { id:'jupiter', name:'Jupiter', cls:'Gas Giant · The Rim', size:4.6, orbit:60, speed:0.13, color:0xc8a878,
+    banded:['#caa979','#a9824f','#d8c098','#b08b58','#e0caa0'], known:1,
+    reveals:[
+      { book:1, allegiance:'none',
+        stats:{ 'Region':'The outer worlds', 'Allegiance':'Distant frontier' },
+        desc:'King of the outer dark, far from Luna\'s reach — its moons a frontier the Core barely governs.' },
+      { book:4, allegiance:'rim',
+        stats:{ 'Allegiance':'Rim Dominion', 'Region':'Ilium', 'Known For':'Battle of Ilium' },
+        desc:'Its skies — the region the Rim calls Ilium — where the great fleets of Core and Rim have twice met and burned.' }] },
+
+  { id:'io', name:'Io', cls:'Moon of Jupiter', size:0.62, parent:'jupiter', orbit:6.4, speed:1.5, color:0xd9c054, known:1,
+    reveals:[
+      { book:1, allegiance:'none', stats:{ 'Type':'Volcanic moon', 'Region':'The outer worlds' },
+        desc:'A sulfur-yellow moon of fire and fault lines on the far frontier.' },
+      { book:4, allegiance:'rim', stats:{ 'Allegiance':'Rim Dominion', 'Ruling House':'Raa', 'Seat':'Sungrave' },
+        desc:'From the fortress of Sungrave, House Raa rules the Rim by the old codes — austere, honorable, unforgiving.' }] },
+
+  { id:'europa', name:'Europa', cls:'Moon of Jupiter', size:0.58, parent:'jupiter', orbit:8.2, speed:1.1, color:0xa9c4cf, known:1,
+    reveals:[
+      { book:1, allegiance:'none', stats:{ 'Type':'Ice-ocean moon', 'Region':'The outer worlds' },
+        desc:'A world-ocean sealed beneath ice, dotted with sea-cities on the far frontier.' },
+      { book:4, allegiance:'rim', stats:{ 'Allegiance':'Rim Dominion', 'Known For':'Ocean beneath the ice' },
+        desc:'Its storm-sailors are counted among the finest in the Dominion, raised on an ocean that never sees the sun.' }] },
+
+  { id:'ganymede', name:'Ganymede', cls:'Moon of Jupiter', size:0.72, parent:'jupiter', orbit:10.2, speed:0.85, color:0x9b9486, known:1,
+    reveals:[
+      { book:1, allegiance:'none', stats:{ 'Type':'Largest moon', 'Region':'The outer worlds' },
+        desc:'The largest moon in the system — a shipbuilding frontier far from the Core.' },
+      { book:4, allegiance:'rim', stats:{ 'Allegiance':'Rim Dominion', 'Known For':'The Dockyards' },
+        desc:'Its famed dockyards built the Rim\'s navies — until they burned at the Battle of Ilium, a wound the Dominion has never forgiven.' }] },
+
+  { id:'callisto', name:'Callisto', cls:'Moon of Jupiter', size:0.62, parent:'jupiter', orbit:12.2, speed:0.65, color:0x7d7468, known:1,
+    reveals:[
+      { book:1, allegiance:'none', stats:{ 'Type':'Cratered moon', 'Region':'The outer worlds' },
+        desc:'Cratered, cold, and quiet on the outer edge of Jupiter\'s court.' },
+      { book:4, allegiance:'rim', stats:{ 'Allegiance':'Rim Dominion', 'Role':'Outer garrison' },
+        desc:'The Dominion\'s watchful outer picket over Ilium.' }] },
+
+  { id:'saturn', name:'Saturn', cls:'Gas Giant · The Rim', size:3.9, orbit:76, speed:0.09, rings:true, color:0xd6c294,
+    banded:['#d8c597','#bfa672','#e6d6ae','#c9b07e'], known:1,
+    reveals:[
+      { book:1, allegiance:'none', stats:{ 'Type':'Ringed gas giant', 'Region':'The outer worlds' },
+        desc:'Crowned in ice and dust — a ringed giant on the deep frontier.' },
+      { book:4, allegiance:'rim', stats:{ 'Allegiance':'Rim Dominion', 'Known For':'The Rings' },
+        desc:'Its moons and ring-stations mark the deep heart of Rim territory, far from the Core\'s reach.' }] },
+
+  { id:'titan', name:'Titan', cls:'Moon of Saturn', size:0.7, parent:'saturn', orbit:6.8, speed:1.0, color:0xc79b52, known:1,
+    reveals:[
+      { book:1, allegiance:'none', stats:{ 'Type':'Hazed moon', 'Region':'The outer worlds' },
+        desc:'Amber haze over frozen methane seas — a hard world on the frontier.' },
+      { book:4, allegiance:'rim', stats:{ 'Allegiance':'Rim Dominion', 'Known For':'Methane skies' },
+        desc:'A hard world that breeds hard people, loyal to the Dominion\'s old ways.' }] },
+
+  { id:'uranus', name:'Uranus', cls:'Ice Giant · Far Rim', size:2.6, orbit:88, speed:0.06, color:0x9fd2d8, known:1,
+    reveals:[
+      { book:1, allegiance:'none', stats:{ 'Type':'Ice giant', 'Region':'The outer dark' },
+        desc:'Pale and remote, where the Society\'s writ was always thin.' },
+      { book:4, allegiance:'rim', stats:{ 'Allegiance':'Rim Dominion', 'Region':'The Far Rim' },
+        desc:'Far-Rim settlements cling to the dark here, beyond easy reach of any fleet.' }] },
+
+  { id:'neptune', name:'Neptune', cls:'Ice Giant · Far Rim', size:2.5, orbit:98, speed:0.045, color:0x4f74c9, known:1,
+    reveals:[
+      { book:1, allegiance:'none', stats:{ 'Type':'Ice giant', 'Region':'The outer dark' },
+        desc:'The last giant — dark-blue storms at the edge of settled space.' },
+      { book:4, allegiance:'rim', stats:{ 'Allegiance':'Rim Dominion', 'Region':'The Far Rim' },
+        desc:'The Dominion\'s farthest frontier, guarding the edge of the known worlds.' }] },
+
+  { id:'triton', name:'Triton', cls:'Moon of Neptune', size:0.55, parent:'neptune', orbit:4.6, speed:1.1, color:0xb9c7c4, known:1,
+    reveals:[
+      { book:1, allegiance:'none', stats:{ 'Type':'Frozen moon', 'Region':'The outer dark' },
+        desc:'Frozen geysers under a black sky. Beyond it lies nothing but the void.' },
+      { book:4, allegiance:'rim', stats:{ 'Allegiance':'Rim Dominion', 'Known For':'Edge of the worlds' },
+        desc:'The Dominion\'s last outpost — and whatever chooses to hide past it.' }] },
 ];
 
 const SHIPS = [
-  {
-    id:'morningstar', name:'Morning Star', eyebrow:'Warship · Flagship of the Rising',
-    anchor:'mars', orbit:9.5, speed:.025, scale:1.0, hue:0xc1352b,
-    stats:{ 'Class':'MoonBreaker-class dreadnought', 'Commander':'Darrow of Lykos — the Reaper', 'Built':'In secret, by the Sons of Ares', 'Famed for':'Carrying the Rising from Mars to the gates of Luna' },
-    body:`The hammer of the Rising. Hidden from the Society until the hour it was needed, the Morning Star became Darrow\u2019s home, his weapon, and the most feared silhouette in the system — Howlers prowling its halls, a wolf banner at its prow.`
-  },
-  {
-    id:'archimedes', name:'Archimedes', eyebrow:'Torchship · Smuggler\u2019s Blade',
-    anchor:'jupiter', orbit:27, speed:.02, scale:.55, hue:0xd8b04a,
-    stats:{ 'Class':'Swift torchship / runner', 'Crew':'Darrow\u2019s Howlers on covert runs', 'Helm':'Colloway xe Char, ace of aces', 'Famed for':'The secret voyage to the Rim' },
-    body:`Small, fast, and far too clever to catch. When the Republic\u2019s heroes had to disappear — to the Rim, through blockades, past everything hunting them — they went aboard the Archimedes and trusted the best pilot alive to thread the dark.`
-  },
-  {
-    id:'lightbringer', name:'Lightbringer', eyebrow:'Warship · Titan of the Society',
-    anchor:'mercury', orbit:7.5, speed:.03, scale:1.25, hue:0xe8d490,
-    stats:{ 'Class':'Super-dreadnought — largest warship ever laid down', 'Built for':'Atalantia au Grimmus and the Ash Armada', 'Fate':'Taken by the Reaper, turned against its makers', 'Famed for':'A fortress that blots out stars' },
-    body:`The Society\u2019s answer to its own twilight: a vessel so vast it is less a ship than a moving citadel. Forged to end the Rising at Mercury — and instead made legend when Darrow seized it and renamed the future.`
-  }
+  { id:'morningstar', name:'Morning Star', hull:'republic', anchor:'mars', anchorDist:7.5, speed:0.35, scale:1.0, known:3,
+    reveals:[
+      { book:3, allegiance:'republic', name:'Morning Star', cls:'Flagship of the Republic',
+        stats:{ 'Class':'Dreadnought', 'Commander':'Darrow of Lykos', 'Revealed':'In the Rising' },
+        desc:'The Reaper\'s legendary flagship. Unveiled at the height of the Rising, she carried the rebellion from the outer dark to the gates of Luna — and into legend.' },
+      { book:6, allegiance:'society', name:'Morning Star',
+        stats:{ 'Class':'Dreadnought', 'Also Known As':'Lightbringer', 'Flies Under':'The Society' },
+        desc:'Her story did not end with Darrow. The same hull now flies under Gold once more, renamed the Lightbringer — a flagship meant to return the Society\'s light to every world it lost.' }] },
+
+  { id:'archimedes', name:'Archimedes', hull:'none', anchor:'earth', anchorDist:7.8, speed:0.5, scale:0.55, known:4,
+    reveals:[
+      { book:4, allegiance:'none', cls:'Torchship',
+        stats:{ 'Class':'Torchship (fast)', 'Notable Aboard':'Lysander · Cassius', 'Disposition':'Fast, far-roaming' },
+        desc:'A swift torchship wandering the quiet edges of the system, carrying exiles with complicated pasts and no banner they\'ll admit to.' }] },
 ];
 
-/* ============================================================
-   SCENE
-   ============================================================ */
-const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, .1, 5000);
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.setSize(innerWidth,innerHeight);
-document.body.appendChild(renderer.domElement);
+/* ---------- three.js setup ---------- */
+const container = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+container.appendChild(renderer.domElement);
 
-scene.add(new THREE.AmbientLight(0x303a50,.85));
-const sunLight = new THREE.PointLight(0xffe2b0,1.6,0,2);
-scene.add(sunLight);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x04050a);
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 3000);
+
+const ambient = new THREE.AmbientLight(0x404a5a, 0.85);
+scene.add(ambient);
+scene.add(new THREE.PointLight(0xffe0b0, 1.6, 0, 1.6));
 
 /* starfield */
-(function(){
-  const n=2600, pos=new Float32Array(n*3);
+(function makeStars(){
+  const n = 2000, pos = new Float32Array(n*3);
   for(let i=0;i<n;i++){
-    const r=900+Math.random()*1800, t=Math.random()*Math.PI*2, p=Math.acos(2*Math.random()-1);
-    pos[i*3]=r*Math.sin(p)*Math.cos(t); pos[i*3+1]=r*Math.cos(p); pos[i*3+2]=r*Math.sin(p)*Math.sin(t);
+    const r = 350 + Math.random()*900;
+    const th = Math.random()*Math.PI*2, ph = Math.acos(2*Math.random()-1);
+    pos[i*3]=r*Math.sin(ph)*Math.cos(th); pos[i*3+1]=r*Math.cos(ph); pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);
   }
-  const g=new THREE.BufferGeometry();
-  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
-  scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xbfc6d8,size:1.4,sizeAttenuation:false,transparent:true,opacity:.7})));
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color:0xcfd6e4, size:1.1, sizeAttenuation:false, transparent:true, opacity:0.8 })));
 })();
 
-/* glow sprite helper */
-function glowTexture(inner,outer){
-  const c=document.createElement('canvas');c.width=c.height=128;
-  const x=c.getContext('2d');
-  const g=x.createRadialGradient(64,64,0,64,64,64);
-  g.addColorStop(0,inner);g.addColorStop(.4,outer);g.addColorStop(1,'rgba(0,0,0,0)');
-  x.fillStyle=g;x.fillRect(0,0,128,128);
+/* textures */
+function bandedTexture(colors){
+  const c=document.createElement('canvas'); c.width=8; c.height=256; const ctx=c.getContext('2d');
+  let y=0; while(y<256){ const h=8+Math.random()*30; ctx.fillStyle=colors[Math.floor(Math.random()*colors.length)]; ctx.fillRect(0,y,8,h); y+=h; }
+  return new THREE.CanvasTexture(c);
+}
+function glowTexture(inner, outer){
+  const c=document.createElement('canvas'); c.width=c.height=256; const ctx=c.getContext('2d');
+  const g=ctx.createRadialGradient(128,128,0,128,128,128);
+  g.addColorStop(0,inner); g.addColorStop(0.35,outer); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,256,256); return new THREE.CanvasTexture(c);
+}
+function ringTexture(){
+  const c=document.createElement('canvas'); c.width=256; c.height=8; const ctx=c.getContext('2d');
+  for(let x=0;x<256;x++){ const a=0.15+0.55*Math.abs(Math.sin(x*0.18))*((x>30&&x<240)?1:0.25);
+    ctx.fillStyle=`rgba(214,194,148,${a.toFixed(2)})`; ctx.fillRect(x,0,1,8); }
   return new THREE.CanvasTexture(c);
 }
 
-const selectable=[];   // {obj, data, kind}
-const labels=[];       // {el, obj, data, kind, parentBody}
-const orbiters=[];     // {pivot, speed}
-const spinners=[];     // {mesh, spin}
-
-function makeLabel(text, kind, target){
-  const el=document.createElement('button');
-  el.className='tag'+(kind==='ship'?' ship':'');
-  el.textContent=text;
-  el.style.background='none';el.style.border='none';
-  el.addEventListener('click',e=>{e.stopPropagation();select(target);});
-  document.body.appendChild(el);
-  return el;
+const registry = {};
+function makeOrbitLine(radius, parentGroup, color, opacity){
+  const pts=[]; for(let i=0;i<=128;i++){ const a=(i/128)*Math.PI*2; pts.push(new THREE.Vector3(Math.cos(a)*radius,0,Math.sin(a)*radius)); }
+  const g=new THREE.BufferGeometry().setFromPoints(pts);
+  parentGroup.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color, transparent:true, opacity })));
 }
 
-function makeBody(d, parentObj, isMoon){
-  const pivot=new THREE.Object3D();
-  (parentObj||scene).add(pivot);
-  pivot.rotation.y=Math.random()*Math.PI*2;
-
-  let mesh;
-  if(d.type==='star'){
-    mesh=new THREE.Mesh(new THREE.SphereGeometry(d.radius,48,48),
-      new THREE.MeshBasicMaterial({color:d.color}));
-    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture('rgba(255,214,130,.9)','rgba(216,140,40,.35)'),transparent:true,depthWrite:false}));
-    sp.scale.set(d.radius*7,d.radius*7,1);
-    mesh.add(sp);
-  } else {
-    mesh=new THREE.Mesh(new THREE.SphereGeometry(d.radius,40,40),
-      new THREE.MeshStandardMaterial({color:d.color,roughness:.85,metalness:.05}));
-  }
-  mesh.position.x=d.distance;
-  pivot.add(mesh);
-
-  if(d.ring){
-    const rg=new THREE.RingGeometry(d.radius*1.5,d.radius*2.5,72);
-    const rm=new THREE.MeshBasicMaterial({color:0xcab884,side:THREE.DoubleSide,transparent:true,opacity:.4});
-    const ring=new THREE.Mesh(rg,rm);
-    ring.rotation.x=Math.PI/2.25;
-    mesh.add(ring);
-  }
-
-  /* orbit line */
-  if(d.distance>0 && d.type!=='belt'){
-    const seg=128, pts=[];
-    for(let i=0;i<=seg;i++){const a=i/seg*Math.PI*2;pts.push(new THREE.Vector3(Math.cos(a)*d.distance,0,Math.sin(a)*d.distance));}
-    const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
-      new THREE.LineBasicMaterial({color:isMoon?0x3a4258:0x55482c,transparent:true,opacity:isMoon?.5:.6}));
-    (parentObj||scene).add(line);
-  }
-
-  const kind=isMoon?'moon':d.type;
-  selectable.push({obj:mesh,data:d,kind});
-  if(d.type!=='belt'){
-    labels.push({el:makeLabel(d.name,kind,d), obj:mesh, data:d, kind, parent:parentObj?parentObj.userData.bodyId:null});
-  }
-  orbiters.push({pivot,speed:d.speed});
-  if(d.spin) spinners.push({mesh,spin:d.spin});
-  mesh.userData.bodyId=d.id;
-
-  d._mesh=mesh;
-
-  (d.moons||[]).forEach(m=>{m.type='moon';makeBody(m,mesh,true);});
-  return mesh;
-}
-
+/* build bodies */
 BODIES.forEach(b=>{
-  if(b.type==='belt'){
-    /* belt as a particle ring + invisible click anchor */
-    const n=900,pos=new Float32Array(n*3);
-    for(let i=0;i<n;i++){
-      const a=Math.random()*Math.PI*2,r=b.distance-8+Math.random()*16;
-      pos[i*3]=Math.cos(a)*r;pos[i*3+1]=(Math.random()-.5)*3;pos[i*3+2]=Math.sin(a)*r;
-    }
-    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));
-    scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0x8a8378,size:.9,transparent:true,opacity:.8})));
-    const anchor=new THREE.Mesh(new THREE.SphereGeometry(.6,8,8),new THREE.MeshBasicMaterial({visible:false}));
-    anchor.position.set(b.distance,0,0);
-    const pivot=new THREE.Object3D();pivot.add(anchor);scene.add(pivot);
-    orbiters.push({pivot,speed:b.speed});
-    b._mesh=anchor;anchor.userData.bodyId=b.id;
-    selectable.push({obj:anchor,data:b,kind:'belt'});
-    labels.push({el:makeLabel(b.name,'belt',b),obj:anchor,data:b,kind:'belt',parent:null});
-  } else makeBody(b,null,false);
-});
+  const group=new THREE.Group();
+  let material;
+  if(b.emissive) material=new THREE.MeshBasicMaterial({ color:b.color });
+  else if(b.banded) material=new THREE.MeshStandardMaterial({ map:bandedTexture(b.banded), roughness:0.85, metalness:0.05 });
+  else material=new THREE.MeshStandardMaterial({ color:b.color, roughness:0.9, metalness:0.08 });
+  const mesh=new THREE.Mesh(new THREE.SphereGeometry(b.size,40,28), material);
+  mesh.userData.id=b.id; group.add(mesh);
 
-/* ---------- ships ---------- */
-function makeShip(s){
-  const grp=new THREE.Group();
-  const hullMat=new THREE.MeshStandardMaterial({color:0x9aa0ae,roughness:.5,metalness:.7});
-  const trimMat=new THREE.MeshStandardMaterial({color:s.hue,emissive:s.hue,emissiveIntensity:.7,roughness:.4});
-  const hull=new THREE.Mesh(new THREE.CylinderGeometry(.22,.4,2.6,8),hullMat);
-  hull.rotation.z=Math.PI/2;grp.add(hull);
-  const prow=new THREE.Mesh(new THREE.ConeGeometry(.22,.8,8),hullMat);
-  prow.rotation.z=-Math.PI/2;prow.position.x=1.7;grp.add(prow);
-  const spine=new THREE.Mesh(new THREE.BoxGeometry(1.6,.14,.7),hullMat);
-  spine.position.y=.22;grp.add(spine);
-  const engine=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,.25,8),trimMat);
-  engine.rotation.z=Math.PI/2;engine.position.x=-1.42;grp.add(engine);
-  const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture('rgba(255,200,140,.95)','rgba(200,80,40,.3)'),transparent:true,depthWrite:false}));
-  glow.scale.set(1.2,1.2,1);glow.position.x=-1.7;grp.add(glow);
-  grp.scale.setScalar(s.scale);
-  return grp;
-}
-
-SHIPS.forEach(s=>{
-  const host=BODIES.find(b=>b.id===s.anchor)._mesh;
-  const pivot=new THREE.Object3D();
-  pivot.rotation.y=Math.random()*Math.PI*2;
-  pivot.rotation.x=(Math.random()-.5)*.4;
-  host.add(pivot);
-  const ship=makeShip(s);
-  ship.position.x=s.orbit;
-  ship.rotation.y=Math.PI/2;
-  pivot.add(ship);
-  orbiters.push({pivot,speed:s.speed});
-  s._mesh=ship;
-  selectable.push({obj:ship,data:s,kind:'ship'});
-  labels.push({el:makeLabel(s.name,'ship',s),obj:ship,data:s,kind:'ship',parent:s.anchor});
-});
-
-/* ============================================================
-   CAMERA CONTROLS (custom orbit)
-   ============================================================ */
-const ctrl={theta:.9,phi:1.12,dist:430,focus:null,focusRadius:16};
-const camTarget=new THREE.Vector3();
-const desired=new THREE.Vector3();
-
-function focusOn(data){
-  ctrl.focus=data?data._mesh:null;
-  ctrl.focusRadius=data?(data.radius||1.2*(data.scale||1)+1):16;
-  if(data){
-    const r=(data.radius||2)*(data.scale?4:1);
-    ctrl.dist=Math.max(r*6,6);
-    if(data.type==='star')ctrl.dist=70;
-    if(data.id==='belt')ctrl.dist=40;
+  if(b.emissive){
+    const sprite=new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTexture('rgba(255,220,150,0.9)','rgba(255,160,60,0.25)'), blending:THREE.AdditiveBlending, depthWrite:false, transparent:true }));
+    sprite.scale.set(b.size*7,b.size*7,1); group.add(sprite);
   }
-}
-function resetView(){
-  ctrl.focus=null;ctrl.dist=430;ctrl.theta=.9;ctrl.phi=1.12;
-  closeDossier();setActiveNav(null);
-}
-
-let dragging=false,px=0,py=0,moved=0;
-const el=renderer.domElement;
-el.addEventListener('pointerdown',e=>{dragging=true;moved=0;px=e.clientX;py=e.clientY;});
-addEventListener('pointermove',e=>{
-  if(!dragging)return;
-  const dx=e.clientX-px,dy=e.clientY-py;moved+=Math.abs(dx)+Math.abs(dy);
-  px=e.clientX;py=e.clientY;
-  ctrl.theta-=dx*.005;
-  ctrl.phi=Math.min(Math.PI-.15,Math.max(.15,ctrl.phi-dy*.005));
-});
-addEventListener('pointerup',()=>dragging=false);
-el.addEventListener('wheel',e=>{
-  e.preventDefault();
-  ctrl.dist*=1+Math.sign(e.deltaY)*.09;
-  clampDist();
-},{passive:false});
-
-/* pinch zoom */
-let pinchD=0;
-el.addEventListener('touchstart',e=>{if(e.touches.length===2){pinchD=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}},{passive:true});
-el.addEventListener('touchmove',e=>{
-  if(e.touches.length===2){
-    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-    if(pinchD)ctrl.dist*=pinchD/d;
-    pinchD=d;clampDist();dragging=false;
+  if(b.rings){
+    const ringGeo=new THREE.RingGeometry(b.size*1.45,b.size*2.35,96);
+    const pos=ringGeo.attributes.position, uv=ringGeo.attributes.uv, v=new THREE.Vector3();
+    for(let i=0;i<pos.count;i++){ v.fromBufferAttribute(pos,i); uv.setXY(i,(v.length()-b.size*1.45)/(b.size*0.9),0.5); }
+    const ring=new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ map:ringTexture(), side:THREE.DoubleSide, transparent:true, depthWrite:false }));
+    ring.rotation.x=Math.PI/2-0.35; group.add(ring);
   }
-},{passive:true});
-el.addEventListener('touchend',()=>{pinchD=0;});
+  scene.add(group);
+  registry[b.id]={ data:b, group, mesh, angle:Math.random()*Math.PI*2 };
+  if(!b.parent && b.orbit>0) makeOrbitLine(b.orbit, scene, 0xd4a937, 0.14);
+});
+BODIES.filter(b=>b.parent).forEach(b=> makeOrbitLine(b.orbit, registry[b.parent].group, 0x8fa0b5, 0.12));
 
-function clampDist(){
-  const min=Math.max(ctrl.focusRadius*2.2,3);
-  ctrl.dist=Math.min(900,Math.max(min,ctrl.dist));
+/* build ships */
+function buildShip(s){
+  const g=new THREE.Group();
+  const hullColor = s.hull==='society'?0xe8d9ae:0x6c7280;
+  const trimColor = s.hull==='society'?0xd4a937:0xb3322a;
+  const hullMat=new THREE.MeshStandardMaterial({ color:hullColor, roughness:0.5, metalness:0.6 });
+  const trimMat=new THREE.MeshStandardMaterial({ color:trimColor, roughness:0.4, metalness:0.5, emissive:trimColor, emissiveIntensity:0.25 });
+
+  const spine=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.26,3.2,10),hullMat); spine.rotation.z=Math.PI/2; g.add(spine);
+  const prow=new THREE.Mesh(new THREE.ConeGeometry(0.26,1.0,10),hullMat); prow.rotation.z=-Math.PI/2; prow.position.x=2.1; g.add(prow);
+  const bridge=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.42,0.42),hullMat); bridge.position.set(-0.4,0.3,0); g.add(bridge);
+  const eng=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.3,0.7,10),trimMat); eng.rotation.z=Math.PI/2; eng.position.x=-1.9; g.add(eng);
+  const flame=new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTexture(s.hull==='society'?'rgba(240,199,94,0.95)':'rgba(255,120,90,0.95)','rgba(255,180,80,0.2)'), blending:THREE.AdditiveBlending, depthWrite:false, transparent:true }));
+  flame.scale.set(1.4,1.4,1); flame.position.x=-2.5; g.add(flame);
+  const finGeo=new THREE.BoxGeometry(1.3,0.06,0.5);
+  const finT=new THREE.Mesh(finGeo,trimMat); finT.position.set(-1.0,0,0.5); finT.rotation.y=0.3; g.add(finT);
+  const finB=new THREE.Mesh(finGeo,trimMat); finB.position.set(-1.0,0,-0.5); finB.rotation.y=-0.3; g.add(finB);
+  g.scale.setScalar(s.scale);
+
+  const proxy=new THREE.Mesh(new THREE.SphereGeometry(2.6,8,6), new THREE.MeshBasicMaterial({ visible:false }));
+  proxy.userData.id=s.id; g.add(proxy);
+
+  scene.add(g);
+  registry[s.id]={ data:s, group:g, mesh:proxy, angle:Math.random()*Math.PI*2, isShip:true };
+}
+SHIPS.forEach(buildShip);
+
+/* ---------- spoiler state ---------- */
+let readerLevel = 6; // default: everything (David has read them all)
+
+function tierFor(data, level){
+  if(level < data.known) return null;
+  let best=null;
+  for(const r of data.reveals){ if(r.book<=level && (!best || r.book>best.book)) best=r; }
+  return best;
+}
+function displayFor(id, level){
+  const entry=registry[id]; const t=tierFor(entry.data, level);
+  if(!t) return null;
+  return {
+    name: t.name || entry.data.name,
+    cls:  t.cls  || entry.data.cls,
+    allegiance: t.allegiance,
+    stats: t.stats,
+    desc: t.desc,
+    isShip: !!entry.isShip,
+  };
+}
+function isVisible(id, level){ return !!tierFor(registry[id].data, level); }
+
+/* currently-pickable meshes depend on spoiler level (ships can hide) */
+let pickables = [];
+function rebuildPickables(){
+  pickables = [];
+  Object.keys(registry).forEach(id=>{
+    if(isVisible(id, readerLevel)) pickables.push(registry[id].mesh);
+  });
 }
 
-/* click select via raycast */
-const ray=new THREE.Raycaster();const ptr=new THREE.Vector2();
-el.addEventListener('click',e=>{
-  if(moved>6)return;
-  ptr.x=(e.clientX/innerWidth)*2-1;ptr.y=-(e.clientY/innerHeight)*2+1;
-  ray.setFromCamera(ptr,camera);
-  const objs=selectable.map(s=>s.obj);
-  const hits=ray.intersectObjects(objs,true);
-  if(hits.length){
-    let o=hits[0].object;
-    while(o && !selectable.some(s=>s.obj===o)) o=o.parent;
-    const found=selectable.find(s=>s.obj===o);
-    if(found){select(found.data);return;}
+function applySpoilerLevel(){
+  // show / hide ship groups
+  SHIPS.forEach(s=>{ registry[s.id].group.visible = isVisible(s.id, readerLevel); });
+  rebuildPickables();
+  buildNav();
+  if(selectedId && !isVisible(selectedId, readerLevel)) deselect();
+  else if(selectedId) openDossier(selectedId); // refresh tier text
+}
+
+/* ---------- camera (custom orbit) ---------- */
+const ctrl = { target:new THREE.Vector3(0,0,0), sph:new THREE.Spherical(135,1.05,0.6), minR:4, maxR:340 };
+const HOME_RADIUS = window.innerWidth<760 ? 170 : 135;
+ctrl.sph.radius = HOME_RADIUS;
+function applyCamera(){
+  ctrl.sph.phi=Math.max(0.12,Math.min(Math.PI-0.12,ctrl.sph.phi));
+  ctrl.sph.radius=Math.max(ctrl.minR,Math.min(ctrl.maxR,ctrl.sph.radius));
+  camera.position.copy(ctrl.target).add(new THREE.Vector3().setFromSpherical(ctrl.sph));
+  camera.lookAt(ctrl.target);
+}
+applyCamera();
+
+/* ---------- unified pointer input (mouse + touch + pen) ---------- */
+const pointers = new Map();
+let lastPinch = 0;
+let tap = null;
+
+function pinchDist(){
+  const p=[...pointers.values()];
+  return Math.hypot(p[0].x-p[1].x, p[0].y-p[1].y);
+}
+container.addEventListener('pointerdown', e=>{
+  container.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if(pointers.size===1){
+    tap={ x:e.clientX, y:e.clientY, t:performance.now(), type:e.pointerType };
+    container.classList.add('dragging');
+  } else { tap=null; }
+  if(pointers.size===2) lastPinch=pinchDist();
+});
+container.addEventListener('pointermove', e=>{
+  if(!pointers.has(e.pointerId)){
+    if(e.pointerType==='mouse' && pointers.size===0) hoverCheck(e.clientX,e.clientY);
+    return;
+  }
+  const p=pointers.get(e.pointerId); const px=p.x, py=p.y;
+  p.x=e.clientX; p.y=e.clientY;
+  if(pointers.size===1){
+    ctrl.sph.theta -= (e.clientX-px)*0.0055;
+    ctrl.sph.phi   -= (e.clientY-py)*0.0055;
+    if(tap && Math.hypot(e.clientX-tap.x, e.clientY-tap.y)>8) tap=null;
+  } else if(pointers.size===2){
+    const d=pinchDist();
+    if(lastPinch) ctrl.sph.radius *= lastPinch/d;
+    lastPinch=d;
   }
 });
+function endPointer(e){
+  const wasTap = tap && e.pointerType===tap.type &&
+    Math.hypot(e.clientX-tap.x, e.clientY-tap.y)<8 && (performance.now()-tap.t)<450;
+  pointers.delete(e.pointerId);
+  if(pointers.size<2) lastPinch=0;
+  if(pointers.size===0) container.classList.remove('dragging');
+  if(wasTap){ tap=null; clickPick(e.clientX, e.clientY); }
+  else if(pointers.size===0) tap=null;
+}
+container.addEventListener('pointerup', endPointer);
+container.addEventListener('pointercancel', e=>{ pointers.delete(e.pointerId); if(pointers.size<2) lastPinch=0; if(pointers.size===0){ container.classList.remove('dragging'); tap=null; } });
+container.addEventListener('wheel', e=>{ e.preventDefault(); ctrl.sph.radius *= (1+Math.sign(e.deltaY)*0.09); }, { passive:false });
 
-/* ============================================================
-   UI — dossier & nav
-   ============================================================ */
+/* ---------- picking ---------- */
+const raycaster=new THREE.Raycaster(); const ndc=new THREE.Vector2();
+const tooltip=document.getElementById('tooltip');
+function raycastAt(x,y){
+  ndc.x=(x/window.innerWidth)*2-1; ndc.y=-(y/window.innerHeight)*2+1;
+  raycaster.setFromCamera(ndc,camera);
+  const hits=raycaster.intersectObjects(pickables,false);
+  return hits.length?hits[0].object.userData.id:null;
+}
+function hoverCheck(x,y){
+  const id=raycastAt(x,y);
+  if(id){ container.classList.add('hovering'); const d=displayFor(id,readerLevel);
+    tooltip.textContent=d?d.name:''; tooltip.style.left=x+'px'; tooltip.style.top=y+'px'; tooltip.style.opacity=1; }
+  else { container.classList.remove('hovering'); tooltip.style.opacity=0; }
+}
+function clickPick(x,y){ const id=raycastAt(x,y); if(id) select(id); }
+
+/* ---------- selection + camera flight ---------- */
+let selectedId=null, flight=null;
+const easeInOut=t=> t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+function focusDistanceFor(entry){ return entry.isShip ? Math.max(9, entry.data.scale*10) : entry.data.size*4.2+2.5; }
+
+function select(id){
+  const entry=registry[id]; if(!entry || !isVisible(id,readerLevel)) return;
+  selectedId=id;
+  flight={ t:0, dur:0.95, fromTarget:ctrl.target.clone(), fromRadius:ctrl.sph.radius, toRadius:focusDistanceFor(entry) };
+  openDossier(id);
+  document.querySelectorAll('#nav button').forEach(b=> b.classList.toggle('active', b.dataset.id===id));
+  closeDrawer();
+}
+function deselect(){ selectedId=null; document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('active')); closeDossier(); }
+function resetView(){ deselect(); flight={ t:0, dur:1.0, fromTarget:ctrl.target.clone(), fromRadius:ctrl.sph.radius, toRadius:HOME_RADIUS, homeTarget:new THREE.Vector3(0,0,0) }; }
+
+/* ---------- dossier ---------- */
 const dossier=document.getElementById('dossier');
-const dEyebrow=document.getElementById('dEyebrow');
-const dName=document.getElementById('dName');
-const dStats=document.getElementById('dStats');
-const dBody=document.getElementById('dBody');
-document.getElementById('closeBtn').addEventListener('click',closeDossier);
-
-let current=null;
-function select(data){
-  current=data;
-  focusOn(data);
-  dEyebrow.textContent=data.eyebrow;
-  dName.textContent=data.name;
+const dName=document.getElementById('dName'), dClass=document.getElementById('dClass');
+const dStats=document.getElementById('dStats'), dDesc=document.getElementById('dDesc'), dSigil=document.getElementById('dSigil');
+function openDossier(id){
+  const d=displayFor(id,readerLevel); if(!d) return;
+  dName.textContent=d.name; dClass.textContent=d.cls;
   dStats.innerHTML='';
-  Object.entries(data.stats||{}).forEach(([k,v])=>{
-    const dt=document.createElement('dt');dt.textContent=k;
-    const dd=document.createElement('dd');dd.textContent=v;
-    dStats.append(dt,dd);
+  Object.entries(d.stats).forEach(([k,v])=>{
+    const row=document.createElement('div'); row.className='row';
+    const dt=document.createElement('dt'); dt.textContent=k;
+    const dd=document.createElement('dd'); dd.textContent=v;
+    row.append(dt,dd); dStats.appendChild(row);
   });
-  dBody.innerHTML='';
-  String(data.body||'').split('\n').forEach(t=>{
-    const p=document.createElement('p');p.textContent=t;dBody.appendChild(p);
-  });
+  dDesc.textContent=d.desc;
+  dSigil.style.setProperty('--sigil-color', ALLEGIANCE_COLORS[d.allegiance]||ALLEGIANCE_COLORS.none);
   dossier.classList.add('open');
-  setActiveNav(data.id);
-  labels.forEach(l=>l.el.classList.toggle('sel',l.data===data));
 }
-function closeDossier(){
-  dossier.classList.remove('open');
-  labels.forEach(l=>l.el.classList.remove('sel'));
-}
+function closeDossier(){ dossier.classList.remove('open'); }
+document.getElementById('dossierClose').addEventListener('click', deselect);
 
-/* nav strip */
+/* ---------- nav + drawer ---------- */
 const nav=document.getElementById('nav');
-function navBtn(data,cls){
-  const b=document.createElement('button');
-  b.textContent=data.name;b.dataset.id=data.id;
-  if(cls)b.className=cls;
-  b.addEventListener('click',()=>select(data));
-  nav.appendChild(b);
+function navRow(id){
+  const d=displayFor(id, readerLevel); if(!d) return;
+  const btn=document.createElement('button');
+  btn.dataset.id=id;
+  const data=registry[id].data;
+  if(data.parent) btn.classList.add('sub');
+  if(id===selectedId) btn.classList.add('active');
+  const dot=document.createElement('span'); dot.className='dot '+(d.allegiance||'none');
+  btn.append(dot, document.createTextNode(d.name));
+  btn.addEventListener('click', ()=>select(id));
+  nav.appendChild(btn);
 }
-BODIES.forEach(b=>navBtn(b));
-const div=document.createElement('div');div.className='div';nav.appendChild(div);
-SHIPS.forEach(s=>navBtn(s,'shipBtn'));
-function setActiveNav(id){
-  nav.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.id===id));
+function buildNav(){
+  nav.innerHTML='';
+  const h=txt=>{ const e=document.createElement('h2'); e.textContent=txt; nav.appendChild(e); };
+  const core=['sol','mercury','venus','earth','luna','mars','phobos','deimos'];
+  const rim=['jupiter','io','europa','ganymede','callisto','saturn','titan','uranus','neptune','triton'];
+  h('The Core'); core.forEach(navRow);
+  h('The Rim');  rim.forEach(navRow);
+  const ships=SHIPS.filter(s=>isVisible(s.id,readerLevel));
+  if(ships.length){ h('Notable Ships'); ships.forEach(s=>navRow(s.id)); }
+  // legend
+  const leg=document.createElement('div'); leg.className='legend';
+  [['society','The Society'],['republic','The Republic'],['rim','Rim Dominion'],['none','Frontier / neutral']]
+    .forEach(([k,label])=>{ const li=document.createElement('div'); li.className='li';
+      const dot=document.createElement('span'); dot.className='dot'; dot.style.background=ALLEGIANCE_COLORS[k];
+      li.append(dot, document.createTextNode(label)); leg.appendChild(li); });
+  nav.appendChild(leg);
 }
 
-/* pause / reset */
-let timeScale=reduceMotion?0:1;
-const pauseBtn=document.getElementById('pauseBtn');
-if(reduceMotion)pauseBtn.textContent='Play';
-pauseBtn.addEventListener('click',()=>{
-  timeScale=timeScale?0:1;
-  pauseBtn.textContent=timeScale?'Pause':'Play';
+const scrim=document.getElementById('scrim');
+const menuBtn=document.getElementById('menuBtn');
+function openDrawer(){ nav.classList.add('open'); scrim.classList.add('show'); }
+function closeDrawer(){ nav.classList.remove('open'); scrim.classList.remove('show'); }
+menuBtn.addEventListener('click', ()=> nav.classList.contains('open') ? closeDrawer() : openDrawer());
+scrim.addEventListener('click', closeDrawer);
+
+/* ---------- spoiler selector ---------- */
+const spoilerSel=document.getElementById('spoilerSel');
+BOOKS.forEach(b=>{
+  const o=document.createElement('option'); o.value=b.n;
+  o.textContent = b.n===6 ? `${b.title} (all)` : b.title;
+  spoilerSel.appendChild(o);
 });
-document.getElementById('resetBtn').addEventListener('click',resetView);
+spoilerSel.value=String(readerLevel);
+spoilerSel.addEventListener('change', e=>{ readerLevel=parseInt(e.target.value,10); applySpoilerLevel(); });
 
-/* fade the hint after a while */
-setTimeout(()=>{const h=document.getElementById('hint');if(h)h.style.opacity='0';},14000);
+/* ---------- control bar ---------- */
+let motionOn=true;
+const btnMotion=document.getElementById('btnMotion');
+btnMotion.addEventListener('click', ()=>{ motionOn=!motionOn; btnMotion.textContent='Orbits: '+(motionOn?'On':'Off'); btnMotion.classList.toggle('on',motionOn); });
+document.getElementById('btnReset').addEventListener('click', resetView);
 
-/* ============================================================
-   LOOP
-   ============================================================ */
-const v=new THREE.Vector3();
-function updateLabels(){
-  const camPos=camera.position;
-  labels.forEach(l=>{
-    l.obj.getWorldPosition(v);
-    const dCam=v.distanceTo(camPos);
-    /* moons & ships only labeled when reasonably close */
-    let visible=true;
-    if(l.kind==='moon'||l.kind==='ship') visible=dCam<160;
-    v.project(camera);
-    if(v.z>1)visible=false;
-    if(!visible){l.el.style.display='none';return;}
-    l.el.style.display='block';
-    l.el.style.left=((v.x*.5+.5)*innerWidth)+'px';
-    l.el.style.top=((-v.y*.5+.5)*innerHeight)+'px';
+/* ---------- simulation ---------- */
+let simT=0; const clock=new THREE.Clock();
+function updatePositions(dt){
+  if(motionOn) simT+=dt;
+  BODIES.forEach(b=>{
+    const r=registry[b.id];
+    if(b.orbit===0 && !b.parent){ r.group.position.set(0,0,0); return; }
+    const a=r.angle+simT*b.speed*0.25;
+    if(b.parent){ const p=registry[b.parent].group.position; r.group.position.set(p.x+Math.cos(a)*b.orbit,0,p.z+Math.sin(a)*b.orbit); }
+    else r.group.position.set(Math.cos(a)*b.orbit,0,Math.sin(a)*b.orbit);
+    r.mesh.rotation.y+=dt*0.15;
+  });
+  SHIPS.forEach(s=>{
+    const r=registry[s.id]; if(!r.group.visible) return;
+    const anchor=registry[s.anchor].group.position;
+    const a=r.angle+simT*s.speed*0.25;
+    r.group.position.set(anchor.x+Math.cos(a)*s.anchorDist, Math.sin(a*1.7)*0.9+1.2, anchor.z+Math.sin(a)*s.anchorDist);
+    r.group.rotation.y=-a-Math.PI/2+Math.PI;
   });
 }
 
+const tmp=new THREE.Vector3();
 function animate(){
   requestAnimationFrame(animate);
-  orbiters.forEach(o=>{o.pivot.rotation.y+=o.speed*.25*timeScale;});
-  spinners.forEach(s=>{s.mesh.rotation.y+=s.spin*timeScale;});
+  const dt=Math.min(clock.getDelta(),0.05);
+  updatePositions(dt);
 
-  if(ctrl.focus)ctrl.focus.getWorldPosition(camTarget);
-  else camTarget.set(0,0,0);
-
-  desired.set(
-    camTarget.x+ctrl.dist*Math.sin(ctrl.phi)*Math.cos(ctrl.theta),
-    camTarget.y+ctrl.dist*Math.cos(ctrl.phi),
-    camTarget.z+ctrl.dist*Math.sin(ctrl.phi)*Math.sin(ctrl.theta)
-  );
-  camera.position.lerp(desired,.08);
-  camera.lookAt(camTarget);
-
-  updateLabels();
+  if(flight){
+    flight.t+=dt/flight.dur; const k=easeInOut(Math.min(flight.t,1));
+    const dest=flight.homeTarget ? flight.homeTarget : tmp.copy(registry[selectedId].group.position);
+    ctrl.target.lerpVectors(flight.fromTarget,dest,k);
+    ctrl.sph.radius=flight.fromRadius+(flight.toRadius-flight.fromRadius)*k;
+    if(flight.t>=1) flight=null;
+  } else if(selectedId){
+    ctrl.target.copy(registry[selectedId].group.position); // exact follow → no jitter
+  }
+  applyCamera();
   renderer.render(scene,camera);
 }
+
+/* ---------- init ---------- */
+applySpoilerLevel();
 animate();
 
-addEventListener('resize',()=>{
-  camera.aspect=innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);
+window.addEventListener('resize', ()=>{
+  camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth,window.innerHeight);
 });
-})();
+window.addEventListener('keydown', e=>{ if(e.key==='Escape'){ deselect(); closeDrawer(); } });
 </script>
 </body>
 </html>
